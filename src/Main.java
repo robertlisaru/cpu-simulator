@@ -17,5 +17,10 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        try {
+            assembler.makeBin();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

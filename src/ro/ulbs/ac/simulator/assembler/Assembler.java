@@ -3,10 +3,12 @@ package ro.ulbs.ac.simulator.assembler;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -234,5 +236,17 @@ public class Assembler {
         }
         //</editor-fold>
         fileReader.close();
+    }
+
+    public void makeBin() throws IOException {
+        String binName = asmFile.getName().substring(0, asmFile.getName().indexOf(".")) + ".bin";
+
+        File file = new File(binName);
+        FileChannel fileChannel = new FileOutputStream(file, false).getChannel();
+        code.flip();
+        fileChannel.write(code);
+        data.flip();
+        fileChannel.write(data);
+        fileChannel.close();
     }
 }

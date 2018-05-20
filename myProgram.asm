@@ -1,12 +1,14 @@
-x db 7
-y dd 268435456;comentariu comentos
-z dw 1024
+z dd 2048 ;alt comentariu
+y dw 1024
+x db 127 ;comentariu
+
+
+
 
 .code
-START:
-mov (R7), 123(R3)
-inc R7
-br et1
-mov R6, 80
-et1: mov R8, 120(R6)
-NOP
+StarT:
+br eticheta
+mov (R1), 32(R2)
+mov (R3), 128
+eticheta: inc R9
+nop

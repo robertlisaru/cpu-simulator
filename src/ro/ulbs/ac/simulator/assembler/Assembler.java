@@ -15,19 +15,21 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 
 public class Assembler {
-    private int codeAddressCounter = 0;
-    private int dataAddressCounter = 0;
-    private List<Byte> code = new ArrayList<>();
-    private List<Byte> data = new ArrayList<>();
+    private ByteBuffer code = ByteBuffer.allocate(65536);
+    private ByteBuffer data = ByteBuffer.allocate(65536);
     private File asmFile;
-    private Map<String, Integer> variables = new HashMap<>();
-    private Map<String, Integer> labels = new HashMap<>();
+    private Map<String, Short> variables = new HashMap<>();
+    private Map<String, Short> labels = new HashMap<>();
     private int lineCount = 0;
     private List<Error> errorList = new ArrayList<>();
     private Map<String, String> opcodes = new HashMap<>();
+    private Map<String, List<Short>> unknownOffsets = new HashMap<>();
+    private Map<String, List<Short>> unknownLabels = new HashMap<>();
 
     public Assembler(File asmFile) {
         this.asmFile = asmFile;
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        code.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     public void readOpcodesFromFile(File opcodesFile) throws FileNotFoundException {
@@ -35,11 +37,11 @@ public class Assembler {
         while (scanner.hasNext()) {
             String opcode = scanner.next();
             String mnemonic = scanner.next();
-            opcodes.put(mnemonic, opcode);
+            opcodes.put(mnemonic.toLowerCase(), opcode);
         }
     }
 
-    public void parseLines() throws IOException {
+    public void parseFile() throws IOException {
         FileReader fileReader = new FileReader(asmFile);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         String line;
@@ -56,39 +58,27 @@ public class Assembler {
                 break;
             }
             StringTokenizer st = new StringTokenizer(line, " ,");
-            String label = null;
+            String varName = null;
             String size = null;
             String value = null;
             if (st.hasMoreTokens()) {
-                label = st.nextToken();
+                varName = st.nextToken();
                 if (st.hasMoreTokens()) {
                     size = st.nextToken();
                     if (st.hasMoreTokens()) {
-                        variables.put(label, dataAddressCounter);
                         value = st.nextToken();
-                        ByteBuffer b;
                         switch (size) {
                             case "db":
-                                data.add(Byte.parseByte(value));
-                                dataAddressCounter += 1;
+                                variables.put(varName, new Integer(data.position()).shortValue());
+                                data.put(Byte.parseByte(value));
                                 break;
                             case "dw":
-                                b = ByteBuffer.allocate(2);
-                                b.order(ByteOrder.LITTLE_ENDIAN);
-                                b.putShort(Short.parseShort(value));
-                                data.add(b.array()[0]);
-                                data.add(b.array()[1]);
-                                dataAddressCounter += 2;
+                                variables.put(varName, new Integer(data.position()).shortValue());
+                                data.putShort(Short.parseShort(value));
                                 break;
                             case "dd":
-                                b = ByteBuffer.allocate(4);
-                                b.order(ByteOrder.LITTLE_ENDIAN);
-                                b.putInt(Integer.parseInt(value));
-                                data.add(b.array()[0]);
-                                data.add(b.array()[1]);
-                                data.add(b.array()[2]);
-                                data.add(b.array()[3]);
-                                dataAddressCounter += 4;
+                                variables.put(varName, new Integer(data.position()).shortValue());
+                                data.putInt(Integer.parseInt(value));
                                 break;
                             default:
                                 errorList.add(new Error(lineCount, "invalid variable declaration."));
@@ -97,7 +87,7 @@ public class Assembler {
                     }
                 }
             }
-            if (label == null || size == null || value == null) {
+            if (varName == null || size == null || value == null) {
                 errorList.add(new Error(lineCount, "invalid variable declaration."));
             }
         }
@@ -105,38 +95,67 @@ public class Assembler {
         //<editor-fold desc="code parsing">
         while ((line = bufferedReader.readLine()) != null) {
             lineCount++;
-            StringTokenizer st = new StringTokenizer(line, " ,");
+            StringTokenizer lineTokenizer = new StringTokenizer(line, " ,");
             StringBuilder instructionBits = new StringBuilder();
-            if (st.hasMoreTokens()) {
-                String token = st.nextToken();
+            if (lineTokenizer.hasMoreTokens()) {
+                String token = lineTokenizer.nextToken();
                 if (token.contains(":")) {
-                    token = token.substring(0, token.indexOf(":"));
-                    labels.put(token, codeAddressCounter);
-                    //todo: backpatching
+                    String label = token.replaceAll("\\W", "");
+                    label = label.toLowerCase();
+                    labels.put(label, new Integer(code.position()).shortValue());
+                    //<editor-fold desc="backpatching">
+                    if (unknownOffsets.containsKey(label)) {
+                        for (Short address : unknownOffsets.get(label)) {
+                            code.put(address, new Integer(labels.get(label) - (address + 2)).byteValue());
+                        }
+                        unknownOffsets.remove(label);
+                    }
+                    if (unknownLabels.containsKey(label)) {
+                        for (Short address : unknownLabels.get(label)) {
+                            code.putShort(address, labels.get(label));
+                        }
+                        unknownLabels.remove(label);
+                    }
+                    //</editor-fold>
                 } else {
+                    token = token.toLowerCase();
                     if (opcodes.containsKey(token)) {
                         instructionBits.append(opcodes.get(token));
                         switch (instructionBits.length()) {
                             case 4:
-                                String MAD;
-                                Short index;
-                                Byte RD;
-                                if (st.hasMoreTokens()) {
-                                    String operand = st.nextToken();
-                                    if (operand.matches("\\d\\(")) {
-                                        MAD = "11";
-                                        StringTokenizer operandTokenizer = new StringTokenizer(operand, "()");
+                                //<editor-fold desc="2 operand instruction">
+                                if (lineTokenizer.hasMoreTokens()) {
+                                    String rawOperand = lineTokenizer.nextToken();
+                                    OperandParser destinationOperand = new OperandParser();
+                                    try {
+                                        destinationOperand.parse(rawOperand);
+                                    } catch (RuntimeException re) {
+                                        errorList.add(new Error(lineCount, re.getMessage()));
+                                        continue;
+                                    }
+                                    if (lineTokenizer.hasMoreTokens()) {
+                                        rawOperand = lineTokenizer.nextToken();
+                                        OperandParser sourceOperand = new OperandParser();
                                         try {
-                                            index = Short.parseShort(operandTokenizer.nextToken());
-                                        } catch (NumberFormatException nfe) {
-                                            errorList.add(new Error(lineCount, "invalid index"));
-                                            continue;
-                                        }
-                                        try{
-                                            RD = Byte.parseByte(operandTokenizer.nextToken()
-                                                    .replaceFirst("r", ""));
-                                        }catch(NumberFormatException nfe){
-                                            errorList.add(new Error(lineCount, "invalid register"));
+                                            sourceOperand.parse(rawOperand);
+                                            instructionBits.append(sourceOperand.getAddressingMode());
+                                            instructionBits.append(sourceOperand.getRegister());
+                                            instructionBits.append(destinationOperand.getAddressingMode());
+                                            instructionBits.append(destinationOperand.getRegister());
+                                            code.putShort(new Integer(Integer.parseInt(
+                                                    instructionBits.toString(), 2)).shortValue());
+                                            if (sourceOperand.getAddressingMode() == AddressingMode.IMMEDIATE) {
+                                                code.putShort(sourceOperand.getImmediateValue());
+                                            } else if (sourceOperand.getAddressingMode() == AddressingMode.INDEXED) {
+                                                code.putShort(sourceOperand.getIndex());
+                                            }
+                                            if (destinationOperand.getAddressingMode() == AddressingMode.IMMEDIATE) {
+                                                code.putShort(destinationOperand.getImmediateValue());
+                                            } else if (destinationOperand.getAddressingMode() == AddressingMode.INDEXED) {
+                                                code.putShort(destinationOperand.getIndex());
+                                            }
+                                        } catch (RuntimeException re) {
+                                            errorList.add(new Error(lineCount, re.getMessage()));
                                             continue;
                                         }
                                     }
@@ -144,17 +163,64 @@ public class Assembler {
                                     errorList.add(new Error(lineCount, "missing operands."));
                                 }
                                 break;
+                            //</editor-fold>
                             case 8:
+                                //<editor-fold desc="branch instruction">
+                                if (lineTokenizer.hasMoreTokens()) {
+                                    String label = lineTokenizer.nextToken();
+                                    label = label.toLowerCase();
+                                    if (labels.containsKey(label)) {
+                                        String offsetBinaryString = String.format("%8s",
+                                                Integer.toBinaryString((labels.get(label) - code.position() - 2) & 0xFF))
+                                                .replace(' ', '0');
+                                        instructionBits.append(offsetBinaryString);
+                                    } else {
+                                        instructionBits.append("00000000");
+                                        if (unknownOffsets.containsKey(label)) {
+                                            unknownOffsets.get(label).
+                                                    add(new Integer(code.position() - 1).shortValue());
+                                        } else {
+                                            unknownOffsets.put(label, new ArrayList<Short>());
+                                            unknownOffsets.get(label).
+                                                    add(new Integer(code.position()).shortValue());
+                                        }
+                                    }
+                                    code.putShort(new Integer(Integer.parseInt(
+                                            instructionBits.toString(), 2)).shortValue());
+                                } else {
+                                    errorList.add(new Error(lineCount, "missing branch label"));
+                                    continue;
+                                }
                                 break;
+                            //</editor-fold>
                             case 10:
+                                //<editor-fold desc="1 operand instruction">
+                                if (lineTokenizer.hasMoreTokens()) {
+                                    String rawOperand = lineTokenizer.nextToken();
+                                    OperandParser theOperand = new OperandParser();
+                                    try {
+                                        theOperand.parse(rawOperand);
+                                        instructionBits.append(theOperand.getAddressingMode());
+                                        instructionBits.append(theOperand.getRegister());
+                                        code.putShort(new Integer(Integer.parseInt(
+                                                instructionBits.toString(), 2)).shortValue());
+                                        if (theOperand.getAddressingMode() == AddressingMode.IMMEDIATE) {
+                                            code.putShort(theOperand.getImmediateValue());
+                                        } else if (theOperand.getAddressingMode() == AddressingMode.INDEXED) {
+                                            code.putShort(theOperand.getIndex());
+                                        }
+                                    } catch (RuntimeException re) {
+                                        errorList.add(new Error(lineCount, re.getMessage()));
+                                        continue;
+                                    }
+                                } else {
+                                    errorList.add(new Error(lineCount, "missing operand."));
+                                }
                                 break;
+                            //</editor-fold>
                             case 16:
-                                ByteBuffer byteBuffer = ByteBuffer.allocate(2);
-                                byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-                                byteBuffer.putShort(Short.parseShort(instructionBits.toString(), 2));
-                                code.add(byteBuffer.array()[0]);
-                                code.add(byteBuffer.array()[1]);
-                                codeAddressCounter += 2;
+                                code.putShort(new Integer(Integer.parseInt(
+                                        instructionBits.toString(), 2)).shortValue());
                                 break;
                             default:
                                 break;

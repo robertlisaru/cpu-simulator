@@ -1,0 +1,31 @@
+package ro.ulbs.ac.simulator.microprogram;
+
+public enum OtherOperation {
+    NONE,
+    PC_PLUS_2,
+    PD_COND,
+    PD_COND_AND_CIN,
+    ASL_AND_PD_COND,
+    ASR_AND_PD_COND,
+    LSR_AND_PD_COND,
+    ROL_AND_PD_COND,
+    ROR_AND_PD_COND,
+    RLC_AND_PD_COND,
+    RRC_AND_PD_COND,
+    SP_MINUS_2,
+    SP_PLUS_2,
+    CLC,
+    CLV,
+    CLZ,
+    CLS,
+    CCC,
+    SEC,
+    SEV,
+    SEZ,
+    SES,
+    SCC,
+    HALT,
+    SP_MINUS_2_AND_INTA,
+    A_0_BI_AND_A_0_BE,
+    A_1_BE0
+}

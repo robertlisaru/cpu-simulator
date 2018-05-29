@@ -249,4 +249,12 @@ public class Assembler {
         fileChannel.write(data);
         fileChannel.close();
     }
+
+    public ByteBuffer getCode() {
+        return code;
+    }
+
+    public ByteBuffer getData() {
+        return data;
+    }
 }

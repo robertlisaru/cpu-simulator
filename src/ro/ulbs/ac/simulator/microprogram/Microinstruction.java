@@ -9,9 +9,9 @@ public class Microinstruction {
     private OperatieMemorie operatieMemorie;
     private OtherOperation otherOperation;
     private ConditieSalt conditieSalt;
-    private int indexSalt = 0;
+    private IndexSalt indexSalt = IndexSalt.NONE;
     private boolean jumpOnConditionEqualsFalse = false;
-    private byte microadresaSalt = 0;
+    private Short microadresaSalt = 0;
 
     public SursaSBUS getSursaSBUS() {
         return sursaSBUS;
@@ -77,11 +77,11 @@ public class Microinstruction {
         this.conditieSalt = conditieSalt;
     }
 
-    public int getIndexSalt() {
+    public IndexSalt getIndexSalt() {
         return indexSalt;
     }
 
-    public void setIndexSalt(int indexSalt) {
+    public void setIndexSalt(IndexSalt indexSalt) {
         this.indexSalt = indexSalt;
     }
 
@@ -93,11 +93,11 @@ public class Microinstruction {
         this.jumpOnConditionEqualsFalse = jumpOnConditionEqualsFalse;
     }
 
-    public byte getMicroadresaSalt() {
+    public Short getMicroadresaSalt() {
         return microadresaSalt;
     }
 
-    public void setMicroadresaSalt(byte microadresaSalt) {
+    public void setMicroadresaSalt(Short microadresaSalt) {
         this.microadresaSalt = microadresaSalt;
     }
 }

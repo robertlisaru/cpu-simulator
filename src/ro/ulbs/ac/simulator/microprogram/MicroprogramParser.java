@@ -11,13 +11,13 @@ import java.util.StringTokenizer;
 public class MicroprogramParser {
     public MicroprogramMemory parseFile(File microprogramFile) throws IOException {
         MicroprogramMemory microprogramMemory = new MicroprogramMemory();
-        Map<String, Byte> labels = new HashMap<>();
+        Map<String, Short> labels = new HashMap<>();
 
         //<editor-fold desc="calculate labels">
         FileReader fileReader = new FileReader(microprogramFile);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         String line;
-        for (Byte lineNumber = 0; (line = bufferedReader.readLine()) != null; lineNumber++) {
+        for (Short lineNumber = 0; (line = bufferedReader.readLine()) != null; lineNumber++) {
             StringTokenizer microcommandTokenizer = new StringTokenizer(line, ",");
             if (microcommandTokenizer.countTokens() == 12) {
                 labels.put(microcommandTokenizer.nextToken(), lineNumber);
@@ -97,7 +97,7 @@ public class MicroprogramParser {
 
             microcomand = microcommandTokenizer.nextToken();
             try {
-                microinstruction.setIndexSalt(Integer.parseInt(microcomand));
+                microinstruction.setIndexSalt(IndexSalt.valueOf(microcomand));
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("invalid index salt microcommand: \"" + microcomand + "\" on line " + lineNumber);
             }
@@ -107,7 +107,7 @@ public class MicroprogramParser {
 
             microcomand = microcommandTokenizer.nextToken();
             if (!microcomand.equals("NONE")) {
-                Byte jumpAddress = labels.get(microcomand);
+                Short jumpAddress = labels.get(microcomand);
                 if (jumpAddress == null) {
                     throw new RuntimeException("invalid jump label on line " + lineNumber);
                 }

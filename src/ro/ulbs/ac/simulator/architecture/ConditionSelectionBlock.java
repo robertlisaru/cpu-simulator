@@ -1,4 +1,4 @@
 package ro.ulbs.ac.simulator.architecture;
 
-public class MicroIndexSelector {
+public class ConditionSelectionBlock {
 }

@@ -6,7 +6,7 @@ import java.util.List;
 public class MicroprogramMemory {
     private List<Microinstruction> microinstructionList = new ArrayList<>();
 
-    public Microinstruction microinstructionFetch(byte microAddress) {
+    public Microinstruction microinstructionFetch(Short microAddress) {
         return microinstructionList.get(microAddress);
     }
 

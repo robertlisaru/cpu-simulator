@@ -7,6 +7,7 @@ public class DataMemory {
 
     public DataMemory(ByteBuffer data) {
         this.data = data;
+        data.limit(data.capacity());
     }
 
     public Short read(Short address) {

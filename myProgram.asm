@@ -12,3 +12,4 @@ mov (R1), 32(R2)
 mov (R3), 128
 eticheta: inc R9
 nop
+halt

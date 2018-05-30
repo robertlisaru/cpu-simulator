@@ -9,7 +9,7 @@ public class CodeMemory {
         this.code = code;
     }
 
-    public Short instructionFetch(Short address) {
+    public Short read(Short address) {
         return code.getShort(address.intValue());
     }
 }

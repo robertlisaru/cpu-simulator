@@ -1,7 +1,5 @@
 import ro.ulbs.ac.simulator.architecture.Architecture;
-import ro.ulbs.ac.simulator.architecture.IndexSelectionBlock;
 import ro.ulbs.ac.simulator.assembler.Assembler;
-import ro.ulbs.ac.simulator.microprogram.IndexSalt;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
         Architecture architecture = new Architecture();
 
-        Assembler assembler = new Assembler(new File("myProgram.asm"));
+        Assembler assembler = new Assembler(new File("simpleAdd.asm"));
         try {
             assembler.readOpcodesFromFile(new File("opcodes.txt"));
         } catch (FileNotFoundException e) {
@@ -30,7 +28,6 @@ public class Main {
 
         architecture.loadCode(assembler.getCode());
         architecture.loadData(assembler.getData());
-
-        System.out.println((new IndexSelectionBlock()).select(IndexSalt.SINGLE_OP_INDEX, Integer.valueOf(0x8395).shortValue()));
+        architecture.executeAll();
     }
 }

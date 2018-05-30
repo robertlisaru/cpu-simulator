@@ -4,7 +4,6 @@ public enum OtherOperation {
     NONE,
     PC_PLUS_2,
     PD_COND,
-    PD_COND_AND_CIN,
     ASL_AND_PD_COND,
     ASR_AND_PD_COND,
     LSR_AND_PD_COND,

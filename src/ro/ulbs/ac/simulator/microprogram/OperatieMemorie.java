@@ -4,5 +4,6 @@ public enum OperatieMemorie {
     NONE,
     IFCH,
     READ,
-    WRITE
+    WRITE,
+    READ_VAL
 }

@@ -10,6 +10,10 @@ public class Flag {
         return z;
     }
 
+    public void setZ(boolean z) {
+        this.z = z;
+    }
+
     public void sez() {
         z = true;
     }
@@ -20,6 +24,10 @@ public class Flag {
 
     public boolean getS() {
         return s;
+    }
+
+    public void setS(boolean s) {
+        this.s = s;
     }
 
     public void ses() {
@@ -34,6 +42,10 @@ public class Flag {
         return c;
     }
 
+    public void setC(boolean c) {
+        this.c = c;
+    }
+
     public void sec() {
         c = true;
     }
@@ -44,6 +56,10 @@ public class Flag {
 
     public boolean getV() {
         return v;
+    }
+
+    public void setV(boolean v) {
+        this.v = v;
     }
 
     public void sev() {
@@ -70,7 +86,7 @@ public class Flag {
         return Integer.valueOf(intZ * 8 + intS * 4 + intC * 2 + intV).shortValue();
     }
 
-    public void fromShort(Short flagShort) {
+    public void setFromShort(Short flagShort) {
         int intZ = flagShort & 8;
         int intS = flagShort & 4;
         int intC = flagShort & 2;

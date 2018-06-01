@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class MicroprogramParser {
-    public MicroprogramMemory parseFile(File microprogramFile) throws IOException {
-        MicroprogramMemory microprogramMemory = new MicroprogramMemory();
-        Map<String, Short> labels = new HashMap<>();
+    private MicroprogramMemory microprogramMemory = new MicroprogramMemory();
+    private Map<String, Short> labels = new HashMap<>();
 
+    public MicroprogramMemory parseFile(File microprogramFile) throws IOException {
         //<editor-fold desc="calculate labels">
         FileReader fileReader = new FileReader(microprogramFile);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
@@ -118,5 +118,9 @@ public class MicroprogramParser {
         }
 
         return microprogramMemory;
+    }
+
+    public Map<String, Short> getLabels() {
+        return labels;
     }
 }

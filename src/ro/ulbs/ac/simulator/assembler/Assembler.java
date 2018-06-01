@@ -28,10 +28,13 @@ public class Assembler {
     private Map<String, List<Short>> unknownOffsets = new HashMap<>();
     private Map<String, List<Short>> unknownLabels = new HashMap<>();
 
-    public Assembler(File asmFile) {
-        this.asmFile = asmFile;
+    public Assembler() {
         data.order(ByteOrder.LITTLE_ENDIAN);
         code.order(ByteOrder.LITTLE_ENDIAN);
+    }
+
+    public void setAsmFile(File asmFile) {
+        this.asmFile = asmFile;
     }
 
     public void readOpcodesFromFile(File opcodesFile) throws FileNotFoundException {
@@ -256,5 +259,9 @@ public class Assembler {
 
     public ByteBuffer getData() {
         return data;
+    }
+
+    public List<Error> getErrorList() {
+        return errorList;
     }
 }

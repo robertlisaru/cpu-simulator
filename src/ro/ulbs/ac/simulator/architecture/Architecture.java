@@ -19,16 +19,17 @@ public class Architecture {
     private Short RBUS;
     private Short[] registerFile = new Short[16];
     private Flag flag = new Flag();
-    private Short SP;
-    private Short T;
-    private Short PC;
-    private Short IVR;
-    private Short ADR;
-    private Short MDR;
-    private Short IR;
+    private Short SP = 0;
+    private Short T = 0;
+    private Short PC = 0;
+    private Short IVR = 0;
+    private Short ADR = 0;
+    private Short MDR = 0;
+    private Short IR = 0;
     private CodeMemory codeMemory;
     private DataMemory dataMemory;
     private MicroprogramMemory microprogramMemory = new MicroprogramMemory();
+    private MicroprogramParser microprogramParser = new MicroprogramParser();
     private ConditionSelectionBlock conditionSelectionBlock = new ConditionSelectionBlock();
     private IndexSelectionBlock indexSelectionBlock = new IndexSelectionBlock();
     private Sequencer sequencer = new Sequencer();
@@ -39,10 +40,9 @@ public class Architecture {
     private Short aluResult;
     private Flag aluFlag = new Flag();
     private boolean halted = false;
-
     public Architecture() {
         try {
-            microprogramMemory = (new MicroprogramParser()).parseFile(new File("ucode.csv"));
+            microprogramMemory = microprogramParser.parseFile(new File("ucode.csv"));
             MIR = microprogramMemory.microinstructionFetch(Integer.valueOf(0).shortValue());
             PC = 0;
             Arrays.fill(registerFile, Integer.valueOf(0).shortValue());
@@ -51,7 +51,47 @@ public class Architecture {
         }
     }
 
-    public void executeSingle() {
+    public Short getMAR() {
+        return MAR;
+    }
+
+    public MicroprogramParser getMicroprogramParser() {
+        return microprogramParser;
+    }
+
+    public Flag getFlag() {
+        return flag;
+    }
+
+    public Short getSP() {
+        return SP;
+    }
+
+    public Short getT() {
+        return T;
+    }
+
+    public Short getPC() {
+        return PC;
+    }
+
+    public Short getIVR() {
+        return IVR;
+    }
+
+    public Short getADR() {
+        return ADR;
+    }
+
+    public Short getMDR() {
+        return MDR;
+    }
+
+    public Short getIR() {
+        return IR;
+    }
+
+    public void executeOneMicroinstruction() {
         microcomandDecoderBlock.decode(MIR);
         sequencer.fetchNextMicroinstruction();
     }
@@ -69,6 +109,14 @@ public class Architecture {
 
     public void loadData(ByteBuffer data) {
         dataMemory = new DataMemory(data);
+    }
+
+    public Short[] getRegisterFile() {
+        return registerFile;
+    }
+
+    public MicroprogramMemory getMicroprogramMemory() {
+        return microprogramMemory;
     }
 
     private class ConditionSelectionBlock {
@@ -318,7 +366,7 @@ public class Architecture {
             aluResult = Integer.valueOf(SBUS + DBUS).shortValue();
             aluFlag.setZ(aluResult == 0);
             aluFlag.setS((aluResult & 0x8000) == 0x8000);
-            aluFlag.setC((( (SBUS & 0xFFFF) + (DBUS & 0xFFFF)) & 0x10000) == 0x10000);
+            aluFlag.setC((((SBUS & 0xFFFF) + (DBUS & 0xFFFF)) & 0x10000) == 0x10000);
             aluFlag.setV((SBUS < 0 && DBUS < 0 && aluResult >= 0) || (SBUS > 0 && DBUS > 0 && aluResult <= 0));
         }
 

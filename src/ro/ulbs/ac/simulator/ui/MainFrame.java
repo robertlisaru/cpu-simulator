@@ -266,7 +266,7 @@ public class MainFrame extends JFrame {
             registersTable = new JTable(registersTableModel);
 
             registersScrollPane = new JScrollPane(registersTable);
-            registersScrollPane.setPreferredSize(new Dimension(200, 285));
+            registersScrollPane.setPreferredSize(new Dimension(150, 285));
 
             setLayout(new BorderLayout());
             add(registersScrollPane, BorderLayout.CENTER);
@@ -355,6 +355,8 @@ public class MainFrame extends JFrame {
             SursaRBUSPainter sursaRBUSPainter = new SursaRBUSPainter();
             DestinatieRBUSPainter destinatieRBUSPainter = new DestinatieRBUSPainter();
             SursaDBUSPainter sursaDBUSPainter = new SursaDBUSPainter();
+            SursaSBUSPainter sursaSBUSPainter = new SursaSBUSPainter();
+            OperatieMemoriePainter operatieMemoriePainter = new OperatieMemoriePainter();
             switch (architecture.getMIR().getSursaRBUS()) {
                 case PD_ALU:
                     sursaRBUSPainter.PD_ALU();
@@ -384,6 +386,13 @@ public class MainFrame extends JFrame {
                     break;
             }
             switch (architecture.getMIR().getSursaDBUS()) {
+                case PD_1:
+                    sursaDBUSPainter.PD_1();
+                    sursaDBUSPainter.paintDBUS();
+                    break;
+                case PD_MINUS_1:
+                    sursaDBUSPainter.PD_MINUS_1();
+                    sursaDBUSPainter.paintDBUS();
                 case PD_PC_DBUS:
                     sursaDBUSPainter.PD_PC_DBUS();
                     sursaDBUSPainter.paintDBUS();
@@ -399,6 +408,52 @@ public class MainFrame extends JFrame {
                 case PD_GPR_S_DBUS:
                     sursaDBUSPainter.PD_GPR_S_DBUS();
                     sursaDBUSPainter.paintDBUS();
+                    break;
+            }
+            switch (architecture.getMIR().getSursaSBUS()) {
+                case PD_NOT_MDR:
+                    sursaSBUSPainter.PD_NOT_MDR();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_MINUS_T:
+                    sursaSBUSPainter.PD_MINUS_T();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_0:
+                    sursaSBUSPainter.PD_0();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_T:
+                    sursaSBUSPainter.PD_T();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_SP:
+                    sursaSBUSPainter.PD_SP();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_IVR:
+                    sursaSBUSPainter.PD_IVR();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_PC_SBUS:
+                    sursaSBUSPainter.PD_PC_SBUS();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_IR_OFFSET:
+                    sursaSBUSPainter.PD_IR_OFFSET();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_GPR_D_SBUS:
+                    sursaSBUSPainter.PD_GPR_D_SBUS();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_MDR_SBUS:
+                    sursaSBUSPainter.PD_MDR_SBUS();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
+                case PD_FLAG:
+                    sursaSBUSPainter.PD_FLAG();
+                    sursaSBUSPainter.paintSBUS();
                     break;
             }
         }
@@ -426,6 +481,7 @@ public class MainFrame extends JFrame {
                 int[] yPoints = {382, 578, 578, 587, 578, 578, 382};
 
                 paintPolygon(xPoints, yPoints);
+                g.drawString("PD_ALU", imageStartX + 508, imageStartY + 395);
             }
         }
 
@@ -454,6 +510,8 @@ public class MainFrame extends JFrame {
                 int xPoints2[] = {263, 255, 261, 261, 265, 265, 270};
                 int yPoints2[] = {480, 489, 489, 588, 588, 489, 489};
                 paintPolygon(xPoints2, yPoints2);
+
+                g.drawString("PM_MDR", imageStartX + 280, imageStartY + 498);
             }
 
             public void PM_GPR() {
@@ -476,6 +534,8 @@ public class MainFrame extends JFrame {
                 int xPoints2[] = {632, 625, 630, 630, 634, 634, 639};
                 int yPoints2[] = {474, 482, 482, 587, 587, 482, 482};
                 paintPolygon(xPoints2, yPoints2);
+
+                g.drawString("PM_FLAG", imageStartX + 564, imageStartY + 442);
             }
         }
 
@@ -526,6 +586,8 @@ public class MainFrame extends JFrame {
                 int xPoints[] = {235, 228, 234, 234, 238, 238, 243};
                 int yPoints[] = {140, 149, 149, 385, 385, 149, 149};
                 paintPolygon(xPoints, yPoints);
+                g.drawString("PD_MDR_DBUS", imageStartX + 287, imageStartY + 430);
+
             }
 
             public void PD_GPR_S_DBUS() {
@@ -544,10 +606,103 @@ public class MainFrame extends JFrame {
                 int xPoints[] = {670, 663, 668, 668, 672, 672, 677};
                 int yPoints[] = {140, 149, 149, 274, 274, 149, 149};
                 paintPolygon(xPoints, yPoints);
+                g.drawString("PD_PC_DBUS", imageStartX + 627, imageStartY + 333);
+            }
+
+            public void PD_1() {
+                g.setColor(Color.RED);
+                g.drawString("PD_1", imageStartX + 490, imageStartY + 185);
+            }
+
+            public void PD_MINUS_1() {
+                g.setColor(Color.RED);
+                g.drawString("PD_MINUS_1", imageStartX + 471, imageStartY + 185);
             }
         }
 
         private class SursaSBUSPainter {
+            public void paintSBUS() {
+                int xPoints[] = {10, 10, 992, 992};
+                int yPoints[] = {46, 50, 50, 46};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_T() {
+                int xPoints[] = {746, 739, 744, 744, 748, 748, 754};
+                int yPoints[] = {53, 62, 62, 385, 385, 62, 62};
+                paintPolygon(xPoints, yPoints);
+
+                g.drawString("PD_T", imageStartX + 790, imageStartY + 430);
+            }
+
+            public void PD_FLAG() {
+                int xPoints[] = {622, 614, 620, 620, 624, 624, 630};
+                int yPoints[] = {53, 62, 62, 385, 385, 62, 62};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_FLAG", imageStartX + 564, imageStartY + 369);
+            }
+
+            public void PD_SP() {
+                int xPoints[] = {807, 800, 805, 805, 809, 809, 815};
+                int yPoints[] = {53, 62, 62, 274, 274, 62, 62};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_SP", imageStartX + 842, imageStartY + 324);
+            }
+
+            public void PD_MDR_SBUS() {
+                int xPoints[] = {268, 261, 266, 266, 270, 270, 276};
+                int yPoints[] = {53, 62, 62, 385, 385, 62, 62};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_MDR_SBUS", imageStartX + 287, imageStartY + 430);
+
+            }
+
+            public void PD_GPR_D_SBUS() {
+                int xPoints[] = {900, 893, 898, 898, 902, 902, 908};
+                int yPoints[] = {53, 62, 62, 266, 266, 62, 62};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_IR_OFFSET() {
+                int xPoints[] = {375, 368, 373, 373, 377, 377, 382};
+                int yPoints[] = {53, 62, 62, 385, 385, 62, 62};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_IVR() {
+                int xPoints[] = {312, 305, 310, 310, 314, 314, 320};
+                int yPoints[] = {53, 62, 62, 274, 274, 62, 62};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_PC_SBUS() {
+                int xPoints[] = {700, 693, 698, 698, 703, 703, 708};
+                int yPoints[] = {53, 62, 62, 274, 274, 62, 62};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_PC_SBUS", imageStartX + 627, imageStartY + 333);
+            }
+
+            public void PD_0() {
+                g.drawString("PD_0", imageStartX + 489, imageStartY + 1);
+            }
+
+            public void PD_MINUS_T() {
+                int xPoints[] = {746, 739, 744, 744, 748, 748, 754};
+                int yPoints[] = {53, 62, 62, 385, 385, 62, 62};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_MINUS_T", imageStartX + 780, imageStartY + 430);
+
+            }
+
+            public void PD_NOT_MDR() {
+                int xPoints[] = {268, 261, 266, 266, 270, 270, 276};
+                int yPoints[] = {53, 62, 62, 385, 385, 62, 62};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_NOT_MDR", imageStartX + 287, imageStartY + 430);
+            }
+        }
+
+        private class OperatieMemoriePainter{
 
         }
     }

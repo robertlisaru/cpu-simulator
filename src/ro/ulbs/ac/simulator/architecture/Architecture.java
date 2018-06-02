@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class Architecture {
+    //region variables
     private Short SBUS;
     private Short DBUS;
     private Short RBUS;
@@ -40,6 +41,8 @@ public class Architecture {
     private Short aluResult;
     private Flag aluFlag = new Flag();
     private boolean halted = false;
+    //endregion
+
     public Architecture() {
         try {
             microprogramMemory = microprogramParser.parseFile(new File("ucode.csv"));
@@ -49,6 +52,18 @@ public class Architecture {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public Microinstruction getMIR() {
+        return MIR;
+    }
+
+    public CodeMemory getCodeMemory() {
+        return codeMemory;
+    }
+
+    public DataMemory getDataMemory() {
+        return dataMemory;
     }
 
     public Short getMAR() {
@@ -315,7 +330,11 @@ public class Architecture {
         }
 
         public void PD_IR_OFFSET() {
-            SBUS = Integer.valueOf(IR & 0xFF).shortValue();
+            if ((IR & 0x80) == 0x80) {
+                SBUS = Integer.valueOf((IR & 0xFF) | 0xFF00).shortValue();
+            } else {
+                SBUS = Integer.valueOf(IR & 0x00FF).shortValue();
+            }
         }
 
         public void PD_FLAG() {

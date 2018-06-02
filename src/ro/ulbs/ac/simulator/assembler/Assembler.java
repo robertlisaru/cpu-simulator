@@ -17,24 +17,29 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 
 public class Assembler {
-    private ByteBuffer code = ByteBuffer.allocate(65536);
-    private ByteBuffer data = ByteBuffer.allocate(65536);
+    private ByteBuffer code;
+    private ByteBuffer data;
     private File asmFile;
-    private Map<String, Short> variables = new HashMap<>();
-    private Map<String, Short> labels = new HashMap<>();
-    private int lineCount = 0;
-    private List<Error> errorList = new ArrayList<>();
-    private Map<String, String> opcodes = new HashMap<>();
-    private Map<String, List<Short>> unknownOffsets = new HashMap<>();
-    private Map<String, List<Short>> unknownLabels = new HashMap<>();
-
-    public Assembler() {
-        data.order(ByteOrder.LITTLE_ENDIAN);
-        code.order(ByteOrder.LITTLE_ENDIAN);
-    }
+    private Map<String, Short> variables;
+    private Map<String, Short> labels;
+    private int lineCount;
+    private List<Error> errorList;
+    private Map<String, String> opcodes = new HashMap<>();;
+    private Map<String, List<Short>> unknownOffsets;
+    private Map<String, List<Short>> unknownLabels;
 
     public void setAsmFile(File asmFile) {
         this.asmFile = asmFile;
+        code = ByteBuffer.allocate(65536);
+        data = ByteBuffer.allocate(65536);
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        code.order(ByteOrder.LITTLE_ENDIAN);
+        variables = new HashMap<>();
+        labels = new HashMap<>();
+        lineCount = 0;
+        errorList = new ArrayList<>();
+        unknownOffsets = new HashMap<>();
+        unknownLabels = new HashMap<>();
     }
 
     public void readOpcodesFromFile(File opcodesFile) throws FileNotFoundException {
@@ -62,7 +67,7 @@ public class Assembler {
             if (line.contains(".code")) {
                 break;
             }
-            StringTokenizer st = new StringTokenizer(line, " ,");
+            StringTokenizer st = new StringTokenizer(line, " ,\t");
             String varName = null;
             String size = null;
             String value = null;
@@ -100,7 +105,7 @@ public class Assembler {
         //<editor-fold desc="code parsing">
         while ((line = bufferedReader.readLine()) != null) {
             lineCount++;
-            StringTokenizer lineTokenizer = new StringTokenizer(line, " ,");
+            StringTokenizer lineTokenizer = new StringTokenizer(line, " ,\t");
             StringBuilder instructionBits = new StringBuilder();
             if (lineTokenizer.hasMoreTokens()) {
                 String token = lineTokenizer.nextToken();
@@ -183,7 +188,7 @@ public class Assembler {
                                         instructionBits.append("00000000");
                                         if (unknownOffsets.containsKey(label)) {
                                             unknownOffsets.get(label).
-                                                    add(new Integer(code.position() - 1).shortValue());
+                                                    add(new Integer(code.position()).shortValue());
                                         } else {
                                             unknownOffsets.put(label, new ArrayList<Short>());
                                             unknownOffsets.get(label).
@@ -214,10 +219,35 @@ public class Assembler {
                                         } else if (theOperand.getAddressingMode() == AddressingMode.INDEXED) {
                                             code.putShort(theOperand.getIndex());
                                         }
+                                    } catch (CallLabelException cle) {
+                                        if (token.equals("call")) {
+                                            instructionBits.append(AddressingMode.IMMEDIATE);
+                                            instructionBits.append("0000");
+                                            code.putShort(new Integer(Integer.parseInt(
+                                                    instructionBits.toString(), 2)).shortValue());
+                                            if (labels.containsKey(rawOperand)) {
+                                                code.putShort(labels.get(rawOperand));
+                                            } else {
+                                                code.putShort(Integer.valueOf(0).shortValue());
+                                                if (unknownLabels.containsKey(rawOperand)) {
+                                                    unknownLabels.get(rawOperand).
+                                                            add(new Integer(code.position() - 2).shortValue());
+                                                } else {
+                                                    unknownLabels.put(rawOperand, new ArrayList<Short>());
+                                                    unknownLabels.get(rawOperand).
+                                                            add(new Integer(code.position() - 2).shortValue());
+                                                }
+                                            }
+
+                                        } else {
+                                            errorList.add(new Error(lineCount, "cannot use label here; " + cle.getMessage()));
+                                            continue;
+                                        }
                                     } catch (RuntimeException re) {
                                         errorList.add(new Error(lineCount, re.getMessage()));
                                         continue;
                                     }
+
                                 } else {
                                     errorList.add(new Error(lineCount, "missing operand."));
                                 }
@@ -238,6 +268,12 @@ public class Assembler {
             }
         }
         //</editor-fold>
+        if (unknownLabels.size() != 0) {
+            errorList.add(new Error(0, "there are unknown labels"));
+        }
+        if (unknownOffsets.size() != 0) {
+            errorList.add(new Error(0, "there are unknown offsets"));
+        }
         fileReader.close();
     }
 

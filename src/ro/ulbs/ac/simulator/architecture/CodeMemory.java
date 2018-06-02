@@ -10,6 +10,10 @@ public class CodeMemory {
     }
 
     public Short read(Short address) {
-        return code.getShort(address.intValue());
+        return code.getShort(address & 0xFFFF);
+    }
+
+    public ByteBuffer getByteBuffer() {
+        return code;
     }
 }

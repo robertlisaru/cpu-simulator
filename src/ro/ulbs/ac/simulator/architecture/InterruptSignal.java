@@ -3,7 +3,7 @@ package ro.ulbs.ac.simulator.architecture;
 public enum InterruptSignal {
     ACLOW(0),
     CIL(1),
-    DIV_ZERO(2),
+    IRQ0(2),
     IRQ1(3),
     IRQ2(4),
     IRQ3(5),

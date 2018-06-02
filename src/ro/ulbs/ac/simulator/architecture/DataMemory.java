@@ -11,10 +11,14 @@ public class DataMemory {
     }
 
     public Short read(Short address) {
-        return data.getShort(address.intValue());
+        return data.getShort(address & 0xFFFF);
     }
 
     public void write(Short address, Short data) {
-        this.data.putShort(address.intValue(), data);
+        this.data.putShort(address & 0xFFFF, data);
+    }
+
+    public ByteBuffer getByteBuffer() {
+        return data;
     }
 }

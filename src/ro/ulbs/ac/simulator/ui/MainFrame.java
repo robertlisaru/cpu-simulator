@@ -2,8 +2,10 @@ package ro.ulbs.ac.simulator.ui;
 
 import ro.ulbs.ac.simulator.architecture.Architecture;
 import ro.ulbs.ac.simulator.assembler.Assembler;
+import ro.ulbs.ac.simulator.assembler.Error;
 import ro.ulbs.ac.simulator.microprogram.ConditieSalt;
 import ro.ulbs.ac.simulator.microprogram.Microinstruction;
+import ro.ulbs.ac.simulator.microprogram.OperatieMemorie;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -17,13 +19,14 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Vector;
 
 public class MainFrame extends JFrame {
     //region variables
     private Architecture architecture = new Architecture();
-    private Assembler assembler = new Assembler();
+    private Assembler assembler;
     private JDesktopPane desktopPane = new JDesktopPane();
     private RegistersPanel registersPanel = new RegistersPanel();
     private JMenuBar menuBar = new JMenuBar();
@@ -31,7 +34,8 @@ public class MainFrame extends JFrame {
     private JMenu executeMenu = new JMenu("Execute");
     private JMenu viewMenu = new JMenu("View");
     private JMenuItem loadProgram = new JMenuItem("Load program");
-    private JMenuItem executeMicroinstruction = new JMenuItem("Microinstruction");
+    private JMenuItem runMicroinstruction = new JMenuItem("Microinstruction");
+    private JMenuItem runProgram = new JMenuItem("Run program");
     private JMenuItem viewRegisters = new JCheckBoxMenuItem("Registers");
     private JMenuItem viewCurrentMicroinstruction = new JCheckBoxMenuItem("Current microinstruction");
     private JTabbedPane tabbedPane = new JTabbedPane();
@@ -40,6 +44,9 @@ public class MainFrame extends JFrame {
     private CodeMemoryPanel codeMemoryPanel = new CodeMemoryPanel();
     private DataMemoryPanel dataMemoryPanel = new DataMemoryPanel();
     private CurrentMicroinstructionPanel currentMicroinstructionPanel = new CurrentMicroinstructionPanel();
+    private ErrorsPanel errorsPanel = new ErrorsPanel();
+    private SouthPanel southPanel = new SouthPanel();
+    private JFileChooser fileChooser = new JFileChooser();
     //endregion
 
     public MainFrame() {
@@ -48,34 +55,51 @@ public class MainFrame extends JFrame {
         setIconImage(icon.getImage());
         setMinimumSize(new Dimension(800, 500));
         setLocationRelativeTo(null); //screen center
+        setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
 
         //region menu bar
         fileMenu.setMnemonic(KeyEvent.VK_F);
         executeMenu.setMnemonic(KeyEvent.VK_E);
         viewMenu.setMnemonic(KeyEvent.VK_V);
-        executeMicroinstruction.setMnemonic(KeyEvent.VK_M);
-        executeMicroinstruction.addActionListener(new ActionListener() {
+        runMicroinstruction.setMnemonic(KeyEvent.VK_M);
+        runMicroinstruction.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 architecture.executeOneMicroinstruction();
                 registersPanel.updateRegistersTableModel();
                 currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
+                if (architecture.getMIR().getOperatieMemorie() == OperatieMemorie.WRITE) {
+                    dataMemoryPanel.updateDataMemoryTable();
+                }
             }
         });
-        executeMicroinstruction.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0));
+        runMicroinstruction.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0));
+        runMicroinstruction.setEnabled(false);
+        runProgram.setMnemonic(KeyEvent.VK_R);
+        runProgram.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                architecture.executeAll();
+                registersPanel.updateRegistersTableModel();
+                currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
+                dataMemoryPanel.updateDataMemoryTable();
+            }
+        });
+        runProgram.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
+        runProgram.setEnabled(false);
         loadProgram.setMnemonic(KeyEvent.VK_L);
         loadProgram.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File programFile;
-                JFileChooser chooser = new JFileChooser();
-                chooser.setMultiSelectionEnabled(false);
+                fileChooser.setMultiSelectionEnabled(false);
                 FileNameExtensionFilter filter = new FileNameExtensionFilter("Assembly (.asm)", "asm");
-                chooser.setFileFilter(filter);
-                int option = chooser.showOpenDialog(MainFrame.this);
+                fileChooser.setFileFilter(filter);
+                int option = fileChooser.showOpenDialog(MainFrame.this);
                 if (option == JFileChooser.APPROVE_OPTION) {
-                    programFile = chooser.getSelectedFile();
+                    programFile = fileChooser.getSelectedFile();
                     try {
+                        assembler = new Assembler();
                         assembler.readOpcodesFromFile(new File("opcodes.txt"));
                     } catch (FileNotFoundException e1) {
                         e1.printStackTrace();
@@ -92,13 +116,19 @@ public class MainFrame extends JFrame {
                         } catch (IOException e1) {
                             e1.printStackTrace();
                         }
+                        architecture = new Architecture();
                         architecture.loadCode(assembler.getCode());
+                        codeMemoryPanel.updateCodeMemoryTable();
                         architecture.loadData(assembler.getData());
+                        dataMemoryPanel.updateDataMemoryTable();
+                        currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
+                        runProgram.setEnabled(true);
+                        runMicroinstruction.setEnabled(true);
+                        errorsPanel.setVisible(false);
 
                     } else {
-                        //print error list
+                        errorsPanel.updateErrorsTable();
                     }
-
                 }
             }
         });
@@ -128,7 +158,8 @@ public class MainFrame extends JFrame {
         });
 
         fileMenu.add(loadProgram);
-        executeMenu.add(executeMicroinstruction);
+        executeMenu.add(runMicroinstruction);
+        executeMenu.add(runProgram);
         viewMenu.add(viewRegisters);
         viewMenu.add(viewCurrentMicroinstruction);
         menuBar.add(fileMenu);
@@ -145,7 +176,7 @@ public class MainFrame extends JFrame {
         setLayout(new BorderLayout());
         add(tabbedPane, BorderLayout.CENTER);
         add(registersPanel, BorderLayout.EAST);
-        add(currentMicroinstructionPanel, BorderLayout.SOUTH);
+        add(southPanel, BorderLayout.SOUTH);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         pack();
@@ -210,37 +241,37 @@ public class MainFrame extends JFrame {
             Vector row = new Vector();
             for (int i = 0; i < architecture.getRegisterFile().length; i++) {
                 row = new Vector();
-                row.add("r" + i);
-                row.add(architecture.getRegisterFile()[i]);
+                row.add("R" + i);
+                row.add(String.format("%04X", architecture.getRegisterFile()[i] & 0xffff));
                 registersTableModel.addRow(row);
             }
             row = new Vector();
             row.add("SP");
-            row.add(architecture.getSP());
+            row.add(String.format("%04X", architecture.getSP() & 0xffff));
             registersTableModel.addRow(row);
             row = new Vector();
             row.add("T");
-            row.add(architecture.getT());
+            row.add(String.format("%04X", architecture.getT() & 0xffff));
             registersTableModel.addRow(row);
             row = new Vector();
             row.add("PC");
-            row.add(architecture.getPC());
+            row.add(String.format("%04X", architecture.getPC() & 0xffff));
             registersTableModel.addRow(row);
             row = new Vector();
             row.add("IR");
-            row.add(architecture.getIR());
+            row.add(String.format("%04X", architecture.getIR() & 0xffff));
             registersTableModel.addRow(row);
             row = new Vector();
             row.add("IVR");
-            row.add(architecture.getIVR());
+            row.add(String.format("%04X", architecture.getIVR() & 0xffff));
             registersTableModel.addRow(row);
             row = new Vector();
             row.add("ADR");
-            row.add(architecture.getADR());
+            row.add(String.format("%04X", architecture.getADR() & 0xffff));
             registersTableModel.addRow(row);
             row = new Vector();
             row.add("MDR");
-            row.add(architecture.getMDR());
+            row.add(String.format("%04X", architecture.getMDR() & 0xffff));
             registersTableModel.addRow(row);
             row = new Vector();
             row.add("Z flag");
@@ -265,6 +296,10 @@ public class MainFrame extends JFrame {
         public DiagramPanel() {
 
         }
+
+        public void paint(Graphics g) {
+            g.drawLine(1, 1, 10, 10);
+        }
     }
 
     private class MicroprogramPanel extends JPanel {
@@ -272,12 +307,11 @@ public class MainFrame extends JFrame {
         private JTable microprogramTable;
         private DefaultTableModel microprogramTableModel;
         private int selectedRowNr = 0;
+        private String columnNames[] = {"Microaddress", "Label", "Sursa SBUS", "Sursa DBUS", "ALU", "Sursa RBUS",
+                "Dest. RBUS", "MEM", "Other", "Condition", "Index", "Eval. mode", "Jump address"};
 
         public MicroprogramPanel() {
             microprogramTableModel = new DefaultTableModel() {
-                String columnNames[] = {"Address", "Label", "Sursa SBUS", "Sursa DBUS", "ALU", "Sursa RBUS",
-                        "Dest. RBUS", "MEM", "Other", "Condition", "Index", "Eval. mode", "Jump address"};
-
                 @Override
                 public int getColumnCount() {
                     return columnNames.length;
@@ -300,7 +334,7 @@ public class MainFrame extends JFrame {
 
             for (Integer i = 0; i < microinstructionList.size(); i++) {
                 Vector row = new Vector();
-                row.add(i);
+                row.add(String.format("%04X", i));
                 for (Map.Entry<String, Short> entry : labels.entrySet()) {
                     if (entry.getValue() == i.shortValue()) {
                         row.add(entry.getKey());
@@ -348,8 +382,13 @@ public class MainFrame extends JFrame {
             add(microprogramScrollPane, BorderLayout.CENTER);
         }
 
+        public String[] getColumnNames() {
+            return columnNames;
+        }
+
         public void setSelectedRow(int rowNr) {
             microprogramTable.setRowSelectionInterval(rowNr, rowNr);
+            microprogramTable.scrollRectToVisible(new Rectangle(microprogramTable.getCellRect(rowNr, 0, true)));
         }
 
         public DefaultTableModel getMicroprogramTableModel() {
@@ -358,12 +397,106 @@ public class MainFrame extends JFrame {
     }
 
     private class CodeMemoryPanel extends JPanel {
+        private JScrollPane codeMemoryScrollPane;
+        private JTable codeMemoryTable;
+        private DefaultTableModel codeMemoryTableModel;
+        private int offsetColumnsCount = 16;
+
         public CodeMemoryPanel() {
+            codeMemoryTableModel = new DefaultTableModel() {
+                @Override
+                public int getColumnCount() {
+                    return offsetColumnsCount + 1;
+                }
+
+                @Override
+                public String getColumnName(int index) {
+                    if (index == 0) return "Address";
+                    return String.format("%02X", index - 1);
+                }
+
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+
+            codeMemoryTable = new JTable(codeMemoryTableModel);
+            codeMemoryTable.setFocusable(false);
+            codeMemoryScrollPane = new JScrollPane(codeMemoryTable);
+
+            setLayout(new BorderLayout());
+            add(codeMemoryScrollPane, BorderLayout.CENTER);
+        }
+
+        public void updateCodeMemoryTable() {
+            codeMemoryTableModel.getDataVector().removeAllElements();
+            ByteBuffer codeByteBuffer = architecture.getCodeMemory().getByteBuffer();
+            Vector row = new Vector();
+            row.add(String.format("%04X", 0));
+            for (int i = 0; i < codeByteBuffer.limit(); i++) {
+                row.add(String.format("%02X", 0xff & codeByteBuffer.get(i)));
+                if ((i + 1) % offsetColumnsCount == 0) {
+                    codeMemoryTableModel.addRow(row);
+                    row = new Vector();
+                    row.add(String.format("%04X", i + 1));
+                }
+            }
+            if (row.size() != 1) {
+                codeMemoryTableModel.addRow(row);
+            }
         }
     }
 
     private class DataMemoryPanel extends JPanel {
+        private JScrollPane dataMemoryScrollPane;
+        private JTable dataMemoryTable;
+        private DefaultTableModel dataMemoryTableModel;
+        private int offsetColumnsCount = 16;
+
         public DataMemoryPanel() {
+            dataMemoryTableModel = new DefaultTableModel() {
+                @Override
+                public int getColumnCount() {
+                    return offsetColumnsCount + 1;
+                }
+
+                @Override
+                public String getColumnName(int index) {
+                    if (index == 0) return "Address";
+                    return String.format("%02X", index - 1);
+                }
+
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+
+            dataMemoryTable = new JTable(dataMemoryTableModel);
+            dataMemoryTable.setFocusable(false);
+            dataMemoryScrollPane = new JScrollPane(dataMemoryTable);
+
+            setLayout(new BorderLayout());
+            add(dataMemoryScrollPane, BorderLayout.CENTER);
+        }
+
+        public void updateDataMemoryTable() {
+            dataMemoryTableModel.getDataVector().removeAllElements();
+            ByteBuffer dataByteBuffer = architecture.getDataMemory().getByteBuffer();
+            Vector row = new Vector();
+            row.add(String.format("%04X", 0));
+            for (int i = 0; i < dataByteBuffer.limit(); i++) {
+                row.add(String.format("%02X", 0xff & dataByteBuffer.get(i)));
+                if ((i + 1) % offsetColumnsCount == 0) {
+                    dataMemoryTableModel.addRow(row);
+                    row = new Vector();
+                    row.add(String.format("%04X", i + 1));
+                }
+            }
+            if (row.size() != 1) {
+                dataMemoryTableModel.addRow(row);
+            }
         }
     }
 
@@ -375,8 +508,7 @@ public class MainFrame extends JFrame {
         public CurrentMicroinstructionPanel() {
             setBorder(BorderFactory.createTitledBorder("Current microinstruction"));
             currentMicroinstructionTableModel = new DefaultTableModel() {
-                String columnNames[] = {"Address", "Label", "Sursa SBUS", "Sursa DBUS", "ALU", "Sursa RBUS",
-                        "Dest. RBUS", "MEM", "Other", "Condition", "Index", "Eval. mode", "Jump address"};
+                String columnNames[] = microprogramPanel.getColumnNames();
 
                 @Override
                 public int getColumnCount() {
@@ -410,6 +542,69 @@ public class MainFrame extends JFrame {
             currentMicroinstructionTableModel.addRow((Vector) microprogramPanel.getMicroprogramTableModel()
                     .getDataVector().elementAt(architecture.getMAR()));
             microprogramPanel.setSelectedRow(architecture.getMAR());
+        }
+    }
+
+    private class ErrorsPanel extends JPanel {
+        private JScrollPane errorsScrollPane;
+        private JTable errorsTable;
+        private DefaultTableModel errorsTableModel;
+
+        public ErrorsPanel() {
+            setVisible(false);
+            setBorder(BorderFactory.createTitledBorder("Errors"));
+            String[] columnNames = {"Line", "Error message"};
+            errorsTableModel = new DefaultTableModel() {
+                @Override
+                public int getColumnCount() {
+                    return columnNames.length;
+                }
+
+                @Override
+                public String getColumnName(int index) {
+                    return columnNames[index];
+                }
+
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            errorsTable = new JTable(errorsTableModel);
+            errorsTable.getColumnModel().getColumn(0).setMaxWidth(40);
+            errorsScrollPane = new JScrollPane(errorsTable);
+            setLayout(new BorderLayout());
+            add(errorsScrollPane, BorderLayout.CENTER);
+        }
+
+        private void updateErrorsTable() {
+            errorsTableModel.getDataVector().removeAllElements();
+            for (Error error : assembler.getErrorList()) {
+                Vector row = new Vector();
+                row.add(error.getLineNumber());
+                row.add(error.getMessage());
+                errorsTableModel.addRow(row);
+            }
+            errorsTable.setPreferredScrollableViewportSize(
+                    new Dimension(errorsTable.getPreferredSize().width,
+                            errorsTable.getRowHeight() * errorsTable.getRowCount()));
+            setVisible(true);
+        }
+    }
+
+    private class SouthPanel extends JPanel {
+        public SouthPanel() {
+            setLayout(new GridBagLayout());
+            GridBagConstraints c = new GridBagConstraints();
+            c.fill = GridBagConstraints.HORIZONTAL;
+            c.weightx = 1;
+            c.gridx = 0;
+            c.gridy = 0;
+            add(errorsPanel, c);
+            c.gridx = 0;
+            c.gridy = 1;
+            add(currentMicroinstructionPanel, c);
+            pack();
         }
     }
 }

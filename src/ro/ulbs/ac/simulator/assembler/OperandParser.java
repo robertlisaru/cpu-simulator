@@ -1,5 +1,7 @@
 package ro.ulbs.ac.simulator.assembler;
 
+import jdk.nashorn.internal.codegen.CompilerConstants;
+
 import java.util.StringTokenizer;
 
 public class OperandParser {
@@ -44,15 +46,13 @@ public class OperandParser {
         } else if (input.matches("[rR]\\d{1,2}")) {
             addressingMode = AddressingMode.DIRECT;
             register = to4BitsString(input);
-        } else if (!input.matches("\\D")) {
+        } else {
             addressingMode = AddressingMode.IMMEDIATE;
             try {
                 immediateValue = Short.parseShort(input);
             } catch (NumberFormatException nfe) {
-                throw new NumberFormatException("invalid immediate value");
+                throw new CallLabelException(input);
             }
-        } else {
-            throw new RuntimeException("invalid operand");
         }
     }
 

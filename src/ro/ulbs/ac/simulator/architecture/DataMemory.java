@@ -1,13 +1,16 @@
 package ro.ulbs.ac.simulator.architecture;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class DataMemory {
-    private ByteBuffer data;
+    private ByteBuffer data = ByteBuffer.allocate(1<<16);
 
     public DataMemory(ByteBuffer data) {
-        this.data = data;
-        data.limit(data.capacity());
+        ByteBuffer tmp = data.duplicate();
+        tmp.flip();
+        this.data.put(tmp);
+        this.data.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     public Short read(Short address) {

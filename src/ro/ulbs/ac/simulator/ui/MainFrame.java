@@ -7,6 +7,7 @@ import ro.ulbs.ac.simulator.microprogram.ConditieSalt;
 import ro.ulbs.ac.simulator.microprogram.Microinstruction;
 import ro.ulbs.ac.simulator.microprogram.OperatieMemorie;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
@@ -16,6 +17,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,8 +36,10 @@ public class MainFrame extends JFrame {
     private JMenu executeMenu = new JMenu("Execute");
     private JMenu viewMenu = new JMenu("View");
     private JMenuItem loadProgram = new JMenuItem("Load program");
+    private JMenuItem exitSimulator = new JMenuItem("Exit");
     private JMenuItem runMicroinstruction = new JMenuItem("Microinstruction");
     private JMenuItem runProgram = new JMenuItem("Run program");
+    private JMenuItem restartProgram = new JMenuItem("Restart program");
     private JMenuItem viewRegisters = new JCheckBoxMenuItem("Registers");
     private JMenuItem viewCurrentMicroinstruction = new JCheckBoxMenuItem("Current microinstruction");
     private JTabbedPane tabbedPane = new JTabbedPane();
@@ -65,10 +69,14 @@ public class MainFrame extends JFrame {
         runMicroinstruction.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                boolean dataMemoryChanged = false;
+                if (architecture.getMIR().getOperatieMemorie() == OperatieMemorie.WRITE) {
+                    dataMemoryChanged = true;
+                }
                 architecture.executeOneMicroinstruction();
                 registersPanel.updateRegistersTableModel();
                 currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
-                if (architecture.getMIR().getOperatieMemorie() == OperatieMemorie.WRITE) {
+                if (dataMemoryChanged) {
                     dataMemoryPanel.updateDataMemoryTable();
                 }
             }
@@ -87,6 +95,28 @@ public class MainFrame extends JFrame {
         });
         runProgram.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
         runProgram.setEnabled(false);
+        restartProgram.setMnemonic(KeyEvent.VK_T);
+        restartProgram.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                architecture = new Architecture();
+                architecture.loadCode(assembler.getCode());
+                architecture.loadData(assembler.getData());
+                codeMemoryPanel.updateCodeMemoryTable();
+                dataMemoryPanel.updateDataMemoryTable();
+                currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
+                registersPanel.updateRegistersTableModel();
+            }
+        });
+        restartProgram.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
+        restartProgram.setEnabled(false);
+        exitSimulator.setMnemonic(KeyEvent.VK_X);
+        exitSimulator.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
         loadProgram.setMnemonic(KeyEvent.VK_L);
         loadProgram.addActionListener(new ActionListener() {
             @Override
@@ -124,6 +154,8 @@ public class MainFrame extends JFrame {
                         currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
                         runProgram.setEnabled(true);
                         runMicroinstruction.setEnabled(true);
+                        restartProgram.setEnabled(true);
+                        registersPanel.updateRegistersTableModel();
                         errorsPanel.setVisible(false);
 
                     } else {
@@ -158,8 +190,10 @@ public class MainFrame extends JFrame {
         });
 
         fileMenu.add(loadProgram);
+        fileMenu.add(exitSimulator);
         executeMenu.add(runMicroinstruction);
         executeMenu.add(runProgram);
+        executeMenu.add(restartProgram);
         viewMenu.add(viewRegisters);
         viewMenu.add(viewCurrentMicroinstruction);
         menuBar.add(fileMenu);
@@ -293,13 +327,27 @@ public class MainFrame extends JFrame {
     }
 
     private class DiagramPanel extends JPanel {
+        private BufferedImage image;
+        private int imageStartX;
+        private int imageStartY = 10;
+        private Graphics g;
+
         public DiagramPanel() {
-
+            try {
+                image = ImageIO.read(new File("res/diagram.png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            repaint();
         }
 
-        public void paint(Graphics g) {
-            g.drawLine(1, 1, 10, 10);
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            this.g = g;
+            imageStartX = (getWidth() - image.getWidth()) / 2;
+            g.drawImage(image, imageStartX, imageStartY, image.getWidth(), image.getHeight(), null);
         }
+
     }
 
     private class MicroprogramPanel extends JPanel {

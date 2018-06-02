@@ -107,6 +107,7 @@ public class MainFrame extends JFrame {
                 dataMemoryPanel.updateDataMemoryTable();
                 currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
                 registersPanel.updateRegistersTableModel();
+                diagramPanel.repaint();
             }
         });
         restartProgram.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
@@ -353,6 +354,7 @@ public class MainFrame extends JFrame {
         private void decodeAndPaint() {
             SursaRBUSPainter sursaRBUSPainter = new SursaRBUSPainter();
             DestinatieRBUSPainter destinatieRBUSPainter = new DestinatieRBUSPainter();
+            SursaDBUSPainter sursaDBUSPainter = new SursaDBUSPainter();
             switch (architecture.getMIR().getSursaRBUS()) {
                 case PD_ALU:
                     sursaRBUSPainter.PD_ALU();
@@ -379,6 +381,24 @@ public class MainFrame extends JFrame {
                     break;
                 case PM_FLAG:
                     destinatieRBUSPainter.PM_FLAG();
+                    break;
+            }
+            switch (architecture.getMIR().getSursaDBUS()) {
+                case PD_PC_DBUS:
+                    sursaDBUSPainter.PD_PC_DBUS();
+                    sursaDBUSPainter.paintDBUS();
+                    break;
+                case PD_MDR_DBUS:
+                    sursaDBUSPainter.PD_MDR_DBUS();
+                    sursaDBUSPainter.paintDBUS();
+                    break;
+                case PD_GPR_D_DBUS:
+                    sursaDBUSPainter.PD_GPR_D_DBUS();
+                    sursaDBUSPainter.paintDBUS();
+                    break;
+                case PD_GPR_S_DBUS:
+                    sursaDBUSPainter.PD_GPR_S_DBUS();
+                    sursaDBUSPainter.paintDBUS();
                     break;
             }
         }
@@ -457,6 +477,78 @@ public class MainFrame extends JFrame {
                 int yPoints2[] = {474, 482, 482, 587, 587, 482, 482};
                 paintPolygon(xPoints2, yPoints2);
             }
+        }
+
+        private class SursaDBUSPainter {
+            public void paintDBUS() {
+                int xPoints[] = {10, 10, 263, 263};
+                int yPoints[] = {133, 137, 137, 133};
+                paintPolygon(xPoints, yPoints);
+
+                int xPoints2[] = {272, 272, 308, 308};
+                int yPoints2[] = {133, 137, 137, 133};
+                paintPolygon(xPoints2, yPoints2);
+
+                int xPoints3[] = {317, 317, 370, 370};
+                int yPoints3[] = {133, 137, 137, 133};
+                paintPolygon(xPoints3, yPoints3);
+
+                int xPoints4[] = {379, 379, 456, 456};
+                int yPoints4[] = {133, 137, 137, 133};
+                paintPolygon(xPoints4, yPoints4);
+
+                int xPoints5[] = {465, 465, 617, 617};
+                int yPoints5[] = {133, 137, 137, 133};
+                paintPolygon(xPoints5, yPoints5);
+
+                int xPoints6[] = {626, 626, 696, 696};
+                int yPoints6[] = {133, 137, 137, 133};
+                paintPolygon(xPoints6, yPoints6);
+
+                int xPoints7[] = {705, 705, 741, 741};
+                int yPoints7[] = {133, 137, 137, 133};
+                paintPolygon(xPoints7, yPoints7);
+
+                int xPoints8[] = {751, 751, 803, 803};
+                int yPoints8[] = {133, 137, 137, 133};
+                paintPolygon(xPoints8, yPoints8);
+
+                int xPoints9[] = {812, 812, 896, 896};
+                int yPoints9[] = {133, 137, 137, 133};
+                paintPolygon(xPoints9, yPoints9);
+
+                int xPoints10[] = {905, 905, 992, 992};
+                int yPoints10[] = {133, 137, 137, 133};
+                paintPolygon(xPoints10, yPoints10);
+            }
+
+            public void PD_MDR_DBUS() {
+                int xPoints[] = {235, 228, 234, 234, 238, 238, 243};
+                int yPoints[] = {140, 149, 149, 385, 385, 149, 149};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_GPR_S_DBUS() {
+                int xPoints[] = {974, 967, 972, 972, 977, 977, 983};
+                int yPoints[] = {140, 149, 149, 266, 266, 149, 149};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_GPR_D_DBUS() {
+                int xPoints[] = {974, 967, 972, 972, 977, 977, 983};
+                int yPoints[] = {140, 149, 149, 266, 266, 149, 149};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_PC_DBUS() {
+                int xPoints[] = {670, 663, 668, 668, 672, 672, 677};
+                int yPoints[] = {140, 149, 149, 274, 274, 149, 149};
+                paintPolygon(xPoints, yPoints);
+            }
+        }
+
+        private class SursaSBUSPainter {
+
         }
     }
 

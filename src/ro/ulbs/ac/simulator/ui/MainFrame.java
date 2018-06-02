@@ -76,6 +76,7 @@ public class MainFrame extends JFrame {
                 architecture.executeOneMicroinstruction();
                 registersPanel.updateRegistersTableModel();
                 currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
+                diagramPanel.repaint();
                 if (dataMemoryChanged) {
                     dataMemoryPanel.updateDataMemoryTable();
                 }
@@ -346,8 +347,117 @@ public class MainFrame extends JFrame {
             this.g = g;
             imageStartX = (getWidth() - image.getWidth()) / 2;
             g.drawImage(image, imageStartX, imageStartY, image.getWidth(), image.getHeight(), null);
+            decodeAndPaint();
         }
 
+        private void decodeAndPaint() {
+            SursaRBUSPainter sursaRBUSPainter = new SursaRBUSPainter();
+            DestinatieRBUSPainter destinatieRBUSPainter = new DestinatieRBUSPainter();
+            switch (architecture.getMIR().getSursaRBUS()) {
+                case PD_ALU:
+                    sursaRBUSPainter.PD_ALU();
+                    sursaRBUSPainter.paintRBUS();
+                    break;
+                default:
+                    break;
+            }
+            switch (architecture.getMIR().getDestinatieRBUS()) {
+                case PM_ADR:
+                    destinatieRBUSPainter.PM_ADR();
+                    break;
+                case PM_T:
+                    destinatieRBUSPainter.PM_T();
+                    break;
+                case PM_PC:
+                    destinatieRBUSPainter.PM_PC();
+                    break;
+                case PM_GPR:
+                    destinatieRBUSPainter.PM_GPR();
+                    break;
+                case PM_MDR:
+                    destinatieRBUSPainter.PM_MDR();
+                    break;
+                case PM_FLAG:
+                    destinatieRBUSPainter.PM_FLAG();
+                    break;
+            }
+        }
+
+        private void paintPolygon(int[] xPoints, int[] yPoints) {
+            for (int i = 0; i < xPoints.length; i++) {
+                xPoints[i] += imageStartX;
+                yPoints[i] += imageStartY;
+            }
+
+            g.setColor(Color.RED);
+            g.fillPolygon(xPoints, yPoints, xPoints.length);
+        }
+
+        private class SursaRBUSPainter {
+            public void paintRBUS() {
+                int[] xPoints = {63, 63, 939, 939};
+                int[] yPoints = {590, 594, 594, 590};
+
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PD_ALU() {
+                int[] xPoints = {498, 499, 493, 501, 508, 503, 502};
+                int[] yPoints = {382, 578, 578, 587, 578, 578, 382};
+
+                paintPolygon(xPoints, yPoints);
+            }
+        }
+
+        private class DestinatieRBUSPainter {
+            public void PM_ADR() {
+                int xPoints[] = {188, 180, 186, 186, 190, 190, 196};
+                int yPoints[] = {304, 315, 315, 397, 397, 315, 315};
+                paintPolygon(xPoints, yPoints);
+
+                int xPoints2[] = {186, 186, 191, 191};
+                int yPoints2[] = {405, 588, 588, 405};
+                paintPolygon(xPoints2, yPoints2);
+            }
+
+            public void PM_T() {
+                int xPoints[] = {745, 737, 743, 743, 747, 747, 752};
+                int yPoints[] = {418, 427, 427, 588, 588, 427, 427};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PM_MDR() {
+                int xPoints[] = {250, 243, 248, 248, 252, 252, 257};
+                int yPoints[] = {417, 425, 425, 452, 452, 425, 425};
+                paintPolygon(xPoints, yPoints);
+
+                int xPoints2[] = {263, 255, 261, 261, 265, 265, 270};
+                int yPoints2[] = {480, 489, 489, 588, 588, 489, 489};
+                paintPolygon(xPoints2, yPoints2);
+            }
+
+            public void PM_GPR() {
+                int xPoints[] = {937, 929, 935, 935, 939, 939, 944};
+                int yPoints[] = {424, 433, 433, 588, 588, 433, 433};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PM_PC() {
+                int xPoints[] = {683, 675, 681, 681, 685, 685, 690};
+                int yPoints[] = {305, 314, 314, 588, 588, 314, 314};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void PM_FLAG() {
+                int xPoints[] = {621, 614, 619, 619, 623, 623, 628};
+                int yPoints[] = {417, 425, 425, 444, 444, 425, 425};
+                paintPolygon(xPoints, yPoints);
+
+                int xPoints2[] = {632, 625, 630, 630, 634, 634, 639};
+                int yPoints2[] = {474, 482, 482, 587, 587, 482, 482};
+                paintPolygon(xPoints2, yPoints2);
+            }
+        }
     }
 
     private class MicroprogramPanel extends JPanel {

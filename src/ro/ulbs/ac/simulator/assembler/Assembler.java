@@ -24,7 +24,8 @@ public class Assembler {
     private Map<String, Short> labels;
     private int lineCount;
     private List<Error> errorList;
-    private Map<String, String> opcodes = new HashMap<>();;
+    private Map<String, String> opcodes = new HashMap<>();
+    ;
     private Map<String, List<Short>> unknownOffsets;
     private Map<String, List<Short>> unknownLabels;
 

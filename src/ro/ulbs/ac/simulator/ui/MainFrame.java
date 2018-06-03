@@ -55,8 +55,11 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         setTitle("Simulator Didactic");
-        ImageIcon icon = new ImageIcon("./cpu.png");
-        setIconImage(icon.getImage());
+        try {
+            setIconImage(ImageIO.read(getClass().getResourceAsStream("/cpu.png")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         setMinimumSize(new Dimension(800, 500));
         setLocationRelativeTo(null); //screen center
         setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
@@ -336,7 +339,7 @@ public class MainFrame extends JFrame {
 
         public DiagramPanel() {
             try {
-                image = ImageIO.read(new File("res/diagram.png"));
+                image = ImageIO.read(getClass().getResourceAsStream("/diagram.png"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -357,6 +360,8 @@ public class MainFrame extends JFrame {
             SursaDBUSPainter sursaDBUSPainter = new SursaDBUSPainter();
             SursaSBUSPainter sursaSBUSPainter = new SursaSBUSPainter();
             OperatieMemoriePainter operatieMemoriePainter = new OperatieMemoriePainter();
+            OperatieALUPainter operatieALUPainter = new OperatieALUPainter();
+            OtherOperationPainter otherOperationPainter = new OtherOperationPainter();
             switch (architecture.getMIR().getSursaRBUS()) {
                 case PD_ALU:
                     sursaRBUSPainter.PD_ALU();
@@ -447,6 +452,10 @@ public class MainFrame extends JFrame {
                     sursaSBUSPainter.PD_GPR_D_SBUS();
                     sursaSBUSPainter.paintSBUS();
                     break;
+                case PD_GPR_S_SBUS:
+                    sursaSBUSPainter.PD_GPR_S_SBUS();
+                    sursaSBUSPainter.paintSBUS();
+                    break;
                 case PD_MDR_SBUS:
                     sursaSBUSPainter.PD_MDR_SBUS();
                     sursaSBUSPainter.paintSBUS();
@@ -455,6 +464,114 @@ public class MainFrame extends JFrame {
                     sursaSBUSPainter.PD_FLAG();
                     sursaSBUSPainter.paintSBUS();
                     break;
+            }
+            switch (architecture.getMIR().getOperatieMemorie()) {
+                case WRITE:
+                    operatieMemoriePainter.WRITE();
+                    break;
+                case IFCH:
+                    operatieMemoriePainter.IFCH();
+                    break;
+                case READ:
+                    operatieMemoriePainter.READ();
+                    break;
+                case READ_VAL:
+                    operatieMemoriePainter.READ_VAL();
+                    break;
+            }
+            switch (architecture.getMIR().getOperatieALU()) {
+                case SBUS:
+                    operatieALUPainter.SBUS();
+                    break;
+                case OR:
+                    operatieALUPainter.OR();
+                    break;
+                case AND:
+                    operatieALUPainter.AND();
+                    break;
+                case SUM:
+                    operatieALUPainter.SUM();
+                    break;
+                case XOR:
+                    operatieALUPainter.XOR();
+                    break;
+            }
+            g.setColor(Color.RED);
+            switch (architecture.getMIR().getOtherOperation()) {
+                case PD_COND:
+                    otherOperationPainter.PD_COND();
+                    break;
+                case CCC:
+                    g.drawString("CCC", imageStartX + 568, imageStartY + 369);
+                    break;
+                case CLC:
+                    g.drawString("CLC", imageStartX + 568, imageStartY + 369);
+                    break;
+                case CLS:
+                    g.drawString("CLS", imageStartX + 568, imageStartY + 369);
+                    break;
+                case CLV:
+                    g.drawString("CLV", imageStartX + 568, imageStartY + 369);
+                    break;
+                case CLZ:
+                    g.drawString("CLZ", imageStartX + 568, imageStartY + 369);
+                    break;
+                case SCC:
+                    g.drawString("SCC", imageStartX + 568, imageStartY + 369);
+                    break;
+                case SEC:
+                    g.drawString("SEC", imageStartX + 568, imageStartY + 369);
+                    break;
+                case SES:
+                    g.drawString("SES", imageStartX + 568, imageStartY + 369);
+                    break;
+                case SEV:
+                    g.drawString("SEV", imageStartX + 568, imageStartY + 369);
+                    break;
+                case SEZ:
+                    g.drawString("SEZ", imageStartX + 568, imageStartY + 369);
+                    break;
+                case PC_PLUS_2:
+                    g.drawString("PC_PLUS_2", imageStartX + 627, imageStartY + 333);
+                    break;
+                case SP_PLUS_2:
+                    g.drawString("SP_PLUS_2", imageStartX + 827, imageStartY + 324);
+                    break;
+                case SP_MINUS_2:
+                    g.drawString("SP_MINUS_2", imageStartX + 819, imageStartY + 324);
+                    break;
+                case SP_MINUS_2_AND_INTA:
+                    g.drawString("SP_MINUS_2", imageStartX + 819, imageStartY + 324);
+                    break;
+                case ASL_AND_PD_COND:
+                    otherOperationPainter.PD_COND();
+                    g.drawString("ASL", imageStartX + 307, imageStartY + 430);
+                    break;
+                case ASR_AND_PD_COND:
+                    otherOperationPainter.PD_COND();
+                    g.drawString("ASR", imageStartX + 307, imageStartY + 430);
+                    break;
+                case LSR_AND_PD_COND:
+                    otherOperationPainter.PD_COND();
+                    g.drawString("LSR", imageStartX + 307, imageStartY + 430);
+                    break;
+                case RLC_AND_PD_COND:
+                    otherOperationPainter.PD_COND();
+                    g.drawString("RLC", imageStartX + 307, imageStartY + 430);
+                    break;
+                case ROL_AND_PD_COND:
+                    otherOperationPainter.PD_COND();
+                    g.drawString("ROL", imageStartX + 307, imageStartY + 430);
+                    break;
+                case ROR_AND_PD_COND:
+                    otherOperationPainter.PD_COND();
+                    g.drawString("ROR", imageStartX + 307, imageStartY + 430);
+                    break;
+                case RRC_AND_PD_COND:
+                    otherOperationPainter.PD_COND();
+                    g.drawString("RRC", imageStartX + 307, imageStartY + 430);
+                    break;
+
             }
         }
 
@@ -466,6 +583,31 @@ public class MainFrame extends JFrame {
 
             g.setColor(Color.RED);
             g.fillPolygon(xPoints, yPoints, xPoints.length);
+        }
+
+        private void paintMuxToMDR() {
+            int xPoints[] = {250, 243, 248, 248, 252, 252, 257};
+            int yPoints[] = {417, 425, 425, 452, 452, 425, 425};
+            paintPolygon(xPoints, yPoints);
+        }
+
+        private void paintMuxToFlag() {
+            int xPoints[] = {621, 614, 619, 619, 623, 623, 628};
+            int yPoints[] = {417, 425, 425, 444, 444, 425, 425};
+            paintPolygon(xPoints, yPoints);
+        }
+
+        private class OtherOperationPainter {
+
+            public void PD_COND() {
+                paintMuxToFlag();
+                int xPoints[] = {553, 551, 551, 554, 608, 611, 611, 617, 610, 602, 607, 607, 554, 555};
+                int yPoints[] = {364, 368, 540, 542, 542, 540, 483, 483, 474, 483, 483, 538, 538, 364};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_COND", imageStartX + 564, imageStartY + 442);
+            }
+
+
         }
 
         private class SursaRBUSPainter {
@@ -503,10 +645,7 @@ public class MainFrame extends JFrame {
             }
 
             public void PM_MDR() {
-                int xPoints[] = {250, 243, 248, 248, 252, 252, 257};
-                int yPoints[] = {417, 425, 425, 452, 452, 425, 425};
-                paintPolygon(xPoints, yPoints);
-
+                paintMuxToMDR();
                 int xPoints2[] = {263, 255, 261, 261, 265, 265, 270};
                 int yPoints2[] = {480, 489, 489, 588, 588, 489, 489};
                 paintPolygon(xPoints2, yPoints2);
@@ -527,9 +666,7 @@ public class MainFrame extends JFrame {
             }
 
             public void PM_FLAG() {
-                int xPoints[] = {621, 614, 619, 619, 623, 623, 628};
-                int yPoints[] = {417, 425, 425, 444, 444, 425, 425};
-                paintPolygon(xPoints, yPoints);
+                paintMuxToFlag();
 
                 int xPoints2[] = {632, 625, 630, 630, 634, 634, 639};
                 int yPoints2[] = {474, 482, 482, 587, 587, 482, 482};
@@ -600,6 +737,7 @@ public class MainFrame extends JFrame {
                 int xPoints[] = {974, 967, 972, 972, 977, 977, 983};
                 int yPoints[] = {140, 149, 149, 266, 266, 149, 149};
                 paintPolygon(xPoints, yPoints);
+                g.drawString("PD_GPR_D_DBUS", imageStartX + 908, imageStartY + 225);
             }
 
             public void PD_PC_DBUS() {
@@ -646,7 +784,6 @@ public class MainFrame extends JFrame {
                 int xPoints[] = {807, 800, 805, 805, 809, 809, 815};
                 int yPoints[] = {53, 62, 62, 274, 274, 62, 62};
                 paintPolygon(xPoints, yPoints);
-                g.drawString("PD_SP", imageStartX + 842, imageStartY + 324);
             }
 
             public void PD_MDR_SBUS() {
@@ -661,6 +798,7 @@ public class MainFrame extends JFrame {
                 int xPoints[] = {900, 893, 898, 898, 902, 902, 908};
                 int yPoints[] = {53, 62, 62, 266, 266, 62, 62};
                 paintPolygon(xPoints, yPoints);
+                g.drawString("PD_GPR_D_SBUS", imageStartX + 908, imageStartY + 225);
             }
 
             public void PD_IR_OFFSET() {
@@ -679,7 +817,6 @@ public class MainFrame extends JFrame {
                 int xPoints[] = {700, 693, 698, 698, 703, 703, 708};
                 int yPoints[] = {53, 62, 62, 274, 274, 62, 62};
                 paintPolygon(xPoints, yPoints);
-                g.drawString("PD_PC_SBUS", imageStartX + 627, imageStartY + 333);
             }
 
             public void PD_0() {
@@ -700,10 +837,107 @@ public class MainFrame extends JFrame {
                 paintPolygon(xPoints, yPoints);
                 g.drawString("PD_NOT_MDR", imageStartX + 287, imageStartY + 430);
             }
+
+            public void PD_GPR_S_SBUS() {
+                int xPoints[] = {900, 893, 898, 898, 902, 902, 908};
+                int yPoints[] = {53, 62, 62, 266, 266, 62, 62};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("PD_GPR_S_SBUS", imageStartX + 908, imageStartY + 225);
+            }
         }
 
-        private class OperatieMemoriePainter{
+        private class OperatieMemoriePainter {
 
+            public void WRITE() {
+                paintAdrToMem();
+                int xPoints[] = {122, 131, 131, 218, 218, 131, 131};
+                int yPoints[] = {401, 408, 402, 402, 399, 399, 393};
+                paintPolygon(xPoints, yPoints);
+                g.drawString("WRITE", imageStartX + 50, imageStartY + 228);
+            }
+
+            private void paintAdrToMem() {
+                int xPoints[] = {122, 131, 131, 156, 156, 131, 131};
+                int yPoints[] = {288, 297, 290, 290, 287, 287, 281};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void IFCH() {
+                paintAdrToMem();
+                int xPoints[] = {63, 63, 66, 184, 184, 67, 67};
+                int yPoints[] = {430, 545, 548, 548, 544, 544, 430};
+                paintPolygon(xPoints, yPoints);
+                int xPoints2[] = {192, 192, 259, 259};
+                int yPoints2[] = {544, 548, 548, 544};
+                paintPolygon(xPoints2, yPoints2);
+                int xPoints3[] = {267, 267, 373, 376, 376, 381, 375, 367, 372, 372};
+                int yPoints3[] = {544, 548, 548, 545, 426, 426, 417, 425, 425, 544};
+                paintPolygon(xPoints3, yPoints3);
+                g.drawString("IFCH", imageStartX + 52, imageStartY + 228);
+            }
+
+            public void READ() {
+                paintAdrToMem();
+                int xPoints[] = {63, 63, 66, 184, 184, 67, 67};
+                int yPoints[] = {430, 545, 548, 548, 544, 544, 430};
+                paintPolygon(xPoints, yPoints);
+                int xPoints2[] = {192, 192, 240, 240};
+                int yPoints2[] = {544, 548, 548, 544};
+                paintPolygon(xPoints2, yPoints2);
+                int xPoints3[] = {238, 230, 236, 236, 240, 240, 246};
+                int yPoints3[] = {480, 489, 489, 545, 545, 489, 489};
+                paintPolygon(xPoints3, yPoints3);
+                paintMuxToMDR();
+                g.drawString("READ", imageStartX + 52, imageStartY + 228);
+                g.drawString("READ", imageStartX + 285, imageStartY + 492);
+            }
+
+            public void READ_VAL() {
+                READ();
+            }
+        }
+
+        private class OperatieALUPainter {
+            private void paintSBUSToALU() {
+                int xPoints[] = {459, 459, 453, 461, 469, 463, 463};
+                int yPoints[] = {52, 312, 312, 321, 312, 312, 52};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            private void paintDBUSToALU() {
+                int xPoints[] = {539, 539, 533, 541, 550, 543, 543};
+                int yPoints[] = {139, 312, 312, 321, 312, 312, 139};
+                paintPolygon(xPoints, yPoints);
+            }
+
+            public void SBUS() {
+                paintSBUSToALU();
+                g.drawString("SBUS", imageStartX + 488, imageStartY + 278);
+            }
+
+            public void OR() {
+                paintSBUSToALU();
+                paintDBUSToALU();
+                g.drawString("OR", imageStartX + 492, imageStartY + 278);
+            }
+
+            public void AND() {
+                paintSBUSToALU();
+                paintDBUSToALU();
+                g.drawString("AND", imageStartX + 490, imageStartY + 278);
+            }
+
+            public void SUM() {
+                paintSBUSToALU();
+                paintDBUSToALU();
+                g.drawString("SUM", imageStartX + 490, imageStartY + 278);
+            }
+
+            public void XOR() {
+                paintSBUSToALU();
+                paintDBUSToALU();
+                g.drawString("XOR", imageStartX + 490, imageStartY + 278);
+            }
         }
     }
 

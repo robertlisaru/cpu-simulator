@@ -1,7 +1,5 @@
 package ro.ulbs.ac.simulator.assembler;
 
-import jdk.nashorn.internal.codegen.CompilerConstants;
-
 import java.util.StringTokenizer;
 
 public class OperandParser {

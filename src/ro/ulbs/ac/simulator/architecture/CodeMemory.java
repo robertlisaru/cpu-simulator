@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class CodeMemory {
-    private ByteBuffer code = ByteBuffer.allocate(1<<16);
+    private ByteBuffer code = ByteBuffer.allocate(1 << 16);
 
     public CodeMemory(ByteBuffer code) {
         ByteBuffer tmp = code.duplicate();

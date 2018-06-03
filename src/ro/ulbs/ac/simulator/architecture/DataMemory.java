@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class DataMemory {
-    private ByteBuffer data = ByteBuffer.allocate(1<<16);
+    private ByteBuffer data = ByteBuffer.allocate(1 << 16);
 
     public DataMemory(ByteBuffer data) {
         ByteBuffer tmp = data.duplicate();

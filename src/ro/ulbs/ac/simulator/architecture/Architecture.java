@@ -534,7 +534,7 @@ public class Architecture {
         }
 
         public void RLC_AND_PD_COND() {
-            int auxC = aluFlag.getC() ? 1 : 0;
+            int auxC = flag.getC() ? 1 : 0;
             aluFlag.setC(MDR < 0);
             MDR = Integer.valueOf(MDR << 1).shortValue();
             MDR = Integer.valueOf(MDR + auxC).shortValue();
@@ -543,7 +543,7 @@ public class Architecture {
         }
 
         public void RRC_AND_PD_COND() {
-            int auxC = aluFlag.getC() ? 1 : 0;
+            int auxC = flag.getC() ? 1 : 0;
             aluFlag.setC((MDR & 1) == 1);
             MDR = Integer.valueOf(MDR >> 1).shortValue();
             MDR = Integer.valueOf(MDR + (auxC << 15)).shortValue();

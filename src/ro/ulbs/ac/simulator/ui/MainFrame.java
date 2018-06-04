@@ -1,11 +1,13 @@
 package ro.ulbs.ac.simulator.ui;
 
 import ro.ulbs.ac.simulator.architecture.Architecture;
+import ro.ulbs.ac.simulator.architecture.InterruptSignal;
 import ro.ulbs.ac.simulator.assembler.Assembler;
 import ro.ulbs.ac.simulator.assembler.Error;
 import ro.ulbs.ac.simulator.microprogram.ConditieSalt;
 import ro.ulbs.ac.simulator.microprogram.Microinstruction;
 import ro.ulbs.ac.simulator.microprogram.OperatieMemorie;
+import ro.ulbs.ac.simulator.microprogram.OtherOperation;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -35,6 +37,10 @@ public class MainFrame extends JFrame {
     private JMenu fileMenu = new JMenu("File");
     private JMenu executeMenu = new JMenu("Execute");
     private JMenu viewMenu = new JMenu("View");
+    private JMenu interruptMenu = new JMenu("Interrupt");
+    private JMenu helpMenu = new JMenu("Help");
+    private JMenuItem about = new JMenuItem("About");
+    private JMenuItem irq0 = new JCheckBoxMenuItem("IRQ0");
     private JMenuItem loadProgram = new JMenuItem("Load program");
     private JMenuItem exitSimulator = new JMenuItem("Exit");
     private JMenuItem runMicroinstruction = new JMenuItem("Microinstruction");
@@ -76,6 +82,9 @@ public class MainFrame extends JFrame {
                 if (architecture.getMIR().getOperatieMemorie() == OperatieMemorie.WRITE) {
                     dataMemoryChanged = true;
                 }
+                if (architecture.getMIR().getOtherOperation() == OtherOperation.SP_MINUS_2_AND_INTA) {
+                    irq0.setSelected(false);
+                }
                 architecture.executeOneMicroinstruction();
                 registersPanel.updateRegistersTableModel();
                 currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
@@ -95,6 +104,7 @@ public class MainFrame extends JFrame {
                 registersPanel.updateRegistersTableModel();
                 currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
                 dataMemoryPanel.updateDataMemoryTable();
+                irq0.setSelected(false);
             }
         });
         runProgram.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
@@ -104,13 +114,18 @@ public class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 architecture = new Architecture();
-                architecture.loadCode(assembler.getCode());
+                try {
+                    architecture.loadCode(assembler.getCode());
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 architecture.loadData(assembler.getData());
                 codeMemoryPanel.updateCodeMemoryTable();
                 dataMemoryPanel.updateDataMemoryTable();
                 currentMicroinstructionPanel.updateCurrentMicroinstructionTableModel();
                 registersPanel.updateRegistersTableModel();
                 diagramPanel.repaint();
+                irq0.setSelected(false);
             }
         });
         restartProgram.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
@@ -152,7 +167,11 @@ public class MainFrame extends JFrame {
                             e1.printStackTrace();
                         }
                         architecture = new Architecture();
-                        architecture.loadCode(assembler.getCode());
+                        try {
+                            architecture.loadCode(assembler.getCode());
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
                         codeMemoryPanel.updateCodeMemoryTable();
                         architecture.loadData(assembler.getData());
                         dataMemoryPanel.updateDataMemoryTable();
@@ -160,6 +179,7 @@ public class MainFrame extends JFrame {
                         runProgram.setEnabled(true);
                         runMicroinstruction.setEnabled(true);
                         restartProgram.setEnabled(true);
+                        irq0.setEnabled(true);
                         registersPanel.updateRegistersTableModel();
                         errorsPanel.setVisible(false);
 
@@ -193,7 +213,31 @@ public class MainFrame extends JFrame {
                 }
             }
         });
+        irq0.setSelected(false);
+        irq0.setEnabled(false);
+        irq0.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    architecture.getInterruptSystem().signal(InterruptSignal.IRQ0);
+                } else {
+                    architecture.getInterruptSystem().release();
+                }
+            }
+        });
+        about.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(MainFrame.this, "Student: Lisaru Robert-Adrian \n" +
+                        "Grupa: 232/2\n" +
+                        "Anul universtar: 3\n" +
+                        "Anul calendaristic: 2018\n");
+            }
+        });
 
+
+        helpMenu.add(about);
+        interruptMenu.add(irq0);
         fileMenu.add(loadProgram);
         fileMenu.add(exitSimulator);
         executeMenu.add(runMicroinstruction);
@@ -203,7 +247,9 @@ public class MainFrame extends JFrame {
         viewMenu.add(viewCurrentMicroinstruction);
         menuBar.add(fileMenu);
         menuBar.add(executeMenu);
+        menuBar.add(interruptMenu);
         menuBar.add(viewMenu);
+        menuBar.add(helpMenu);
         setJMenuBar(menuBar);
         //endregion
 

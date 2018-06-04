@@ -7,10 +7,12 @@ import ro.ulbs.ac.simulator.microprogram.MicroprogramMemory;
 import ro.ulbs.ac.simulator.microprogram.MicroprogramParser;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 public class Architecture {
@@ -22,7 +24,7 @@ public class Architecture {
     private Flag flag = new Flag();
     private Short SP = 0;
     private Short T = 0;
-    private Short PC = 0;
+    private Short PC = 0x00;
     private Short IVR = 0;
     private Short ADR = 0;
     private Short MDR = 0;
@@ -41,13 +43,13 @@ public class Architecture {
     private Short aluResult;
     private Flag aluFlag = new Flag();
     private boolean halted = false;
+    private int interruptRoutinesStartAddress = 0xFF80;
     //endregion
 
     public Architecture() {
         try {
             microprogramMemory = microprogramParser.parseFile(new File("ucode.csv"));
             MIR = microprogramMemory.microinstructionFetch(Integer.valueOf(0).shortValue());
-            PC = 0;
             Arrays.fill(registerFile, Integer.valueOf(0).shortValue());
         } catch (IOException e) {
             e.printStackTrace();
@@ -118,8 +120,22 @@ public class Architecture {
         }
     }
 
-    public void loadCode(ByteBuffer code) {
-        codeMemory = new CodeMemory(code);
+    public void loadCode(ByteBuffer code) throws IOException {
+        codeMemory = new CodeMemory();
+        loadInterruptRoutines();
+        codeMemory.loadCode(code);
+    }
+
+    private void loadInterruptRoutines() throws IOException {
+        ByteBuffer interruptRoutines = ByteBuffer.allocate(0x100);
+        File interruptRoutinesFile = new File("interruptRoutines.bin");
+        FileInputStream inFile = new FileInputStream(interruptRoutinesFile);
+        FileChannel inChannel = inFile.getChannel();
+        while (inChannel.read(interruptRoutines) != -1) {
+
+        }
+        inFile.close();
+        codeMemory.loadInterruptRoutines(interruptRoutines, interruptRoutinesStartAddress);
     }
 
     public void loadData(ByteBuffer data) {
@@ -132,6 +148,10 @@ public class Architecture {
 
     public MicroprogramMemory getMicroprogramMemory() {
         return microprogramMemory;
+    }
+
+    public InterruptSystem getInterruptSystem() {
+        return interruptSystem;
     }
 
     private class ConditionSelectionBlock {
@@ -192,12 +212,14 @@ public class Architecture {
         }
     }
 
-    private class InterruptSystem {
-        private Short[] interruptVectorTable = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
-
-        private void signal(InterruptSignal interrupSignal) {
+    public class InterruptSystem {
+        public void signal(InterruptSignal interrupSignal) {
             conditionSelectionBlock.setINT(true);
-            IVR = interruptVectorTable[interrupSignal.getValue()];
+            IVR = Integer.valueOf(interruptRoutinesStartAddress + interrupSignal.getValue() * 16).shortValue();
+        }
+
+        public void release() {
+            conditionSelectionBlock.setINT(false);
         }
     }
 
@@ -608,6 +630,7 @@ public class Architecture {
         public void SP_MINUS_2_AND_INTA() {
             SP--;
             SP--;
+            conditionSelectionBlock.setINT(false);
         }
 
         public void A_0_BI_AND_A_0_BE() {

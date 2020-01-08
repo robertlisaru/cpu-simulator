@@ -228,8 +228,8 @@ public class MainFrame extends JFrame {
         about.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(MainFrame.this, "Student: Lisaru Robert-Adrian \n" +
-                        "Grupa: 232/2\n" +
+                JOptionPane.showMessageDialog(MainFrame.this, "Student: \n" +
+                        "Grupa: \n" +
                         "Anul universtar: 3\n" +
                         "Anul calendaristic: 2018\n");
             }
